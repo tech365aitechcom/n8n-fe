@@ -327,7 +327,7 @@ const WorkflowBuilder = () => {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            {selectedNode && (
+            {/* {selectedNode && (
               <div className="mt-4">
                 <h4 className="font-bold mb-2">Select Action</h4>
                 <div className="space-y-2">
@@ -346,7 +346,7 @@ const WorkflowBuilder = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </DialogContent>
         </Dialog>
       </div>

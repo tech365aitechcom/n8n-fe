@@ -34,43 +34,43 @@ import { baseURL } from "../baseURL";
 import axios from "axios";
 import { debounce } from "lodash";
 
-const nodeTypes = {
-  slack: {
-    displayName: "Slack",
-    actions: ["Send Message", "Create Channel", "Upload File"],
-  },
-  gmail: {
-    displayName: "Gmail",
-    actions: ["Send Email", "Create Draft", "Add Label"],
-  },
-  github: {
-    displayName: "GitHub",
-    actions: ["Create Issue", "Create PR", "Add Comment"],
-  },
-  googleCalendar: {
-    displayName: "Google Calendar",
-    actions: [
-      "Create Event",
-      "Create Meeting",
-      "Get Events",
-      "Update Event",
-      "Delete Event",
-      "Create Reminder",
-      "Set Working Hours",
-    ],
-  },
-  webhook: {
-    displayName: "Webhook",
-    actions: [
-      "HTTP GET",
-      "HTTP POST",
-      "HTTP PUT",
-      "HTTP DELETE",
-      "Custom Request",
-      "Listen for Webhook",
-    ],
-  },
-};
+// const nodeTypes = {
+//   slack: {
+//     displayName: "Slack",
+//     actions: ["Send Message", "Create Channel", "Upload File"],
+//   },
+//   gmail: {
+//     displayName: "Gmail",
+//     actions: ["Send Email", "Create Draft", "Add Label"],
+//   },
+//   github: {
+//     displayName: "GitHub",
+//     actions: ["Create Issue", "Create PR", "Add Comment"],
+//   },
+//   googleCalendar: {
+//     displayName: "Google Calendar",
+//     actions: [
+//       "Create Event",
+//       "Create Meeting",
+//       "Get Events",
+//       "Update Event",
+//       "Delete Event",
+//       "Create Reminder",
+//       "Set Working Hours",
+//     ],
+//   },
+//   webhook: {
+//     displayName: "Webhook",
+//     actions: [
+//       "HTTP GET",
+//       "HTTP POST",
+//       "HTTP PUT",
+//       "HTTP DELETE",
+//       "Custom Request",
+//       "Listen for Webhook",
+//     ],
+//   },
+// };
 
 const CustomNode = ({ data, id }) => {
   return (
@@ -151,37 +151,37 @@ const WorkflowBuilder = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [nodeCount, setNodeCount] = useState(0);
-  // const [nodeTypes, setNodeTypes] = useState([]);
+  const [nodeTypes, setNodeTypes] = useState([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // const fetchNodes = async (search, currentPage) => {
-  //   setIsLoading(true);
-  //   try {
-  //     const res = await axios.get(
-  //       `${baseURL}/get-nodes-names?search=${search}&page=${currentPage}&limit=${limit}`
-  //     );
-  //     setNodeTypes(res.data.data);
-  //     setTotalPages(res.data.totalPages);
-  //   } catch (error) {
-  //     console.error("Error fetching nodes:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+  const fetchNodes = async (search, currentPage) => {
+    setIsLoading(true);
+    try {
+      const res = await axios.get(
+        `${baseURL}/get-nodes-names?search=${search}&page=${currentPage}&limit=${limit}`
+      );
+      setNodeTypes(res.data.data);
+      setTotalPages(res.data.totalPages);
+    } catch (error) {
+      console.error("Error fetching nodes:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // const debouncedFetch = useMemo(
-  //   () => debounce((search, page) => fetchNodes(search, page), 300),
-  //   []
-  // );
+  const debouncedFetch = useMemo(
+    () => debounce((search, page) => fetchNodes(search, page), 300),
+    []
+  );
 
-  // useEffect(() => {
-  //   debouncedFetch(searchTerm, page);
-  //   return () => debouncedFetch.cancel();
-  // }, [searchTerm, page, debouncedFetch]);
+  useEffect(() => {
+    debouncedFetch(searchTerm, page);
+    return () => debouncedFetch.cancel();
+  }, [searchTerm, page, debouncedFetch]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);

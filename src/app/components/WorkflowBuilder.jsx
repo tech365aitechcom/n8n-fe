@@ -293,8 +293,8 @@ const WorkflowBuilder = () => {
                   >
                     <div className="flex items-center gap-2">
                       <img
-                        src={config.iconUrl}
-                        className="group-hover:opacity-80 transition-opacity"
+                        src={`https://hireagent.app.n8n.cloud/${config.iconUrl}`}
+                        className="w-6 h-6 group-hover:opacity-80 transition-opacity"
                       />
                       <h3 className="font-medium text-gray-900">
                         {config.displayName}

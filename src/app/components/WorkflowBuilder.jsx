@@ -33,44 +33,8 @@ import { Input } from "@/components/ui/input";
 import { baseURL } from "../baseURL";
 import axios from "axios";
 import { debounce } from "lodash";
-
-// const nodeTypes = {
-//   slack: {
-//     displayName: "Slack",
-//     actions: ["Send Message", "Create Channel", "Upload File"],
-//   },
-//   gmail: {
-//     displayName: "Gmail",
-//     actions: ["Send Email", "Create Draft", "Add Label"],
-//   },
-//   github: {
-//     displayName: "GitHub",
-//     actions: ["Create Issue", "Create PR", "Add Comment"],
-//   },
-//   googleCalendar: {
-//     displayName: "Google Calendar",
-//     actions: [
-//       "Create Event",
-//       "Create Meeting",
-//       "Get Events",
-//       "Update Event",
-//       "Delete Event",
-//       "Create Reminder",
-//       "Set Working Hours",
-//     ],
-//   },
-//   webhook: {
-//     displayName: "Webhook",
-//     actions: [
-//       "HTTP GET",
-//       "HTTP POST",
-//       "HTTP PUT",
-//       "HTTP DELETE",
-//       "Custom Request",
-//       "Listen for Webhook",
-//     ],
-//   },
-// };
+import { getActions } from "../actionConverter";
+import WorkflowModal from "./WorkflowModal";
 
 const CustomNode = ({ data, id }) => {
   return (
@@ -157,6 +121,8 @@ const WorkflowBuilder = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedNodeDetails, setSelectedNodeDetails] = useState(null);
+  const [showNodeDetails, setShowNodeDetails] = useState(false);
 
   const fetchNodes = async (search, currentPage) => {
     setIsLoading(true);
@@ -172,6 +138,22 @@ const WorkflowBuilder = () => {
       setIsLoading(false);
     }
   };
+
+  const fetchNodeDetails = async (nodeId) => {
+    try {
+      const response = await axios.get(`${baseURL}/get-node/${nodeId}`);
+      setSelectedNodeDetails(response.data);
+      setShowNodeDetails(true);
+    } catch (error) {
+      console.error("Error fetching node details:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedNode) {
+      fetchNodeDetails(selectedNode);
+    }
+  }, [selectedNode]);
 
   const debouncedFetch = useMemo(
     () => debounce((search, page) => fetchNodes(search, page), 300),
@@ -217,6 +199,12 @@ const WorkflowBuilder = () => {
     [setNodes, setEdges]
   );
 
+  // const onNodeClick = useCallback((id) => {
+  //   if (id) {
+  //     fetchNodeDetails(id);
+  //   }
+  // }, []);
+
   const calculateNewNodePosition = (count) => {
     const baseX = 100;
     const baseY = 100;
@@ -243,6 +231,7 @@ const WorkflowBuilder = () => {
         action: action,
         color: nodeTypes[type].color,
         onDelete: deleteNode,
+        nodeId: nodeTypes[type].id,
       },
       position,
       dragHandle: ".nodrag",
@@ -251,6 +240,15 @@ const WorkflowBuilder = () => {
     setNodes((nds) => [...nds, newNode]);
     setNodeCount((count) => count + 1);
   };
+
+  const actions = getActions(selectedNodeDetails, () => {
+    console.warn("No properties found, returning default actions.");
+    return [];
+  });
+
+  console.log(selectedNodeDetails, "raju");
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className="h-screen w-full bg-gray-50">
@@ -289,11 +287,18 @@ const WorkflowBuilder = () => {
                   <Card
                     key={type}
                     className="p-4 cursor-pointer border border-gray-100 hover:bg-gray-50 transition-colors group"
-                    onClick={() => setSelectedNode(type)}
+                    onClick={() => {
+                      setSelectedNode(config._id);
+                      setIsModalOpen(true);
+                    }}
                   >
                     <div className="flex items-center gap-2">
                       <img
-                        src={`https://hireagent.app.n8n.cloud/${config.iconUrl}`}
+                        src={`https://hireagent.app.n8n.cloud/${
+                          typeof config.iconUrl === "object"
+                            ? config.iconUrl.light
+                            : config.iconUrl
+                        }`}
                         className="w-6 h-6 group-hover:opacity-80 transition-opacity"
                       />
                       <h3 className="font-medium text-gray-900">
@@ -331,24 +336,73 @@ const WorkflowBuilder = () => {
               <div className="mt-4">
                 <h4 className="font-bold mb-2">Select Action</h4>
                 <div className="space-y-2">
-                  {nodeTypes[selectedNode].actions.map((action) => (
-                    <Button
-                      key={action}
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        createNode(selectedNode, action);
-                        setSelectedNode(null);
-                      }}
-                    >
-                      {action}
-                    </Button>
-                  ))}
+                  {actions
+                    .flatMap((action) =>
+                      action.options.map((opt) => opt.action)
+                    )
+                    .filter(Boolean)
+                    .map((actionName) => (
+                      <Button
+                        key={actionName}
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          createNode(selectedNode, actionName);
+                          setSelectedNode(null);
+                        }}
+                      >
+                        {actionName}
+                      </Button>
+                    ))}
                 </div>
               </div>
             )} */}
           </DialogContent>
         </Dialog>
+        {/* <Dialog open={selectedNode} onOpenChange={setSelectedNode}>
+          <DialogContent className="bg-white">
+            <DialogHeader>
+              <DialogTitle>Node Details</DialogTitle>
+            </DialogHeader>
+            {selectedNode ? (
+              <div className="mt-4">
+                <h4 className="font-bold mb-2">Select Action</h4>
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+                  {actions
+                    .flatMap((action, actionIndex) =>
+                      action.options.map((opt, optIndex) => ({
+                        action: opt.action,
+                        key: `${actionIndex}-${optIndex}-${opt.action}`,
+                      }))
+                    )
+                    .filter((item) => Boolean(item.action))
+                    .map(({ action, key }) => (
+                      <Button
+                        key={key}
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          createNode(selectedNode, action);
+                          setSelectedNode(null);
+                        }}
+                      >
+                        {action}
+                      </Button>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">
+                Loading node details...
+              </div>
+            )}
+          </DialogContent>
+        </Dialog> */}
+        <WorkflowModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          jsonData={selectedNodeDetails}
+        />
       </div>
       <div className="h-[calc(100vh-73px)]">
         <ReactFlow
@@ -357,6 +411,7 @@ const WorkflowBuilder = () => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          // onNodeClick={onNodeClick}
           nodeTypes={customNodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           fitView

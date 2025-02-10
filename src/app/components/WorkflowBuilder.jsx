@@ -34,6 +34,7 @@ import { baseURL } from "../baseURL";
 import axios from "axios";
 import { debounce } from "lodash";
 import { getActions } from "../actionConverter";
+import WorkflowModal from "./WorkflowModal";
 
 const CustomNode = ({ data, id }) => {
   return (
@@ -245,7 +246,9 @@ const WorkflowBuilder = () => {
     return [];
   });
 
-  console.log(actions, "raju");
+  console.log(selectedNodeDetails, "raju");
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className="h-screen w-full bg-gray-50">
@@ -284,7 +287,10 @@ const WorkflowBuilder = () => {
                   <Card
                     key={type}
                     className="p-4 cursor-pointer border border-gray-100 hover:bg-gray-50 transition-colors group"
-                    onClick={() => setSelectedNode(config._id)}
+                    onClick={() => {
+                      setSelectedNode(config._id);
+                      setIsModalOpen(true);
+                    }}
                   >
                     <div className="flex items-center gap-2">
                       <img
@@ -353,7 +359,7 @@ const WorkflowBuilder = () => {
             )} */}
           </DialogContent>
         </Dialog>
-        <Dialog open={selectedNode} onOpenChange={setSelectedNode}>
+        {/* <Dialog open={selectedNode} onOpenChange={setSelectedNode}>
           <DialogContent className="bg-white">
             <DialogHeader>
               <DialogTitle>Node Details</DialogTitle>
@@ -391,7 +397,12 @@ const WorkflowBuilder = () => {
               </div>
             )}
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
+        <WorkflowModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          jsonData={selectedNodeDetails}
+        />
       </div>
       <div className="h-[calc(100vh-73px)]">
         <ReactFlow

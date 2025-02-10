@@ -9,14 +9,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MoreVertical, Workflow } from "lucide-react";
+import { MoreVertical, Play, Workflow } from "lucide-react";
 
 const getDayDifference = (date) => {
   const days = differenceInDays(new Date(), new Date(date));
   return days;
 };
 
-function WorkflowView({ workflows, viewMode }) {
+function WorkflowView({ workflows, viewMode, onActivate }) {
   return (
     <div
       className={`
@@ -37,13 +37,12 @@ function WorkflowView({ workflows, viewMode }) {
         >
           {viewMode === "list" ? (
             // List View Layout
-            <Link
-              href={`/workflow/${workflow.id}`}
-              className="flex items-center justify-between w-full"
-            >
+            <div className="flex items-center justify-between w-full">
               <div className="flex flex-col gap-4 flex-1">
                 <div className="w-full flex items-center gap-2">
-                  <Workflow className="w-5 h-5 text-gray-600" />
+                  <button onClick={() => onActivate(workflow.id)}>
+                    <Play className="w-6 h-6 text-gray-600 cursor-pointer" />
+                  </button>
                   <span className="font-medium text-gray-900">
                     {workflow.name}
                   </span>
@@ -84,15 +83,17 @@ function WorkflowView({ workflows, viewMode }) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </Link>
+            </div>
           ) : (
             // Grid View Layout
-            <Link href={`/workflow/${workflow.id}`}>
+            <div>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xl font-semibold">
                   {workflow.name}
                 </CardTitle>
-                <Workflow className="w-6 h-6 text-gray-600" />
+                <button onClick={() => onActivate(workflow.id)}>
+                  <Play className="w-6 h-6 text-gray-600 cursor-pointer" />
+                </button>
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-gray-600 mt-2">
@@ -121,7 +122,7 @@ function WorkflowView({ workflows, viewMode }) {
                   </span>
                 </div>
               </CardContent>
-            </Link>
+            </div>
           )}
         </Card>
       ))}

@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import axios from "axios";
 
 export default function Home() {
   const [workflows, setWorkflows] = useState([]);
@@ -70,6 +71,22 @@ export default function Home() {
 
     setSortedWorkFlow(sortedWorkflows);
   }, [sort, workflows, searchQuery]);
+
+  const onActivate = async (id) => {
+    try {
+      const response = await axios.post(`${baseURL}/api/workflows/${id}`);
+      if (response.status === 200) {
+        console.log("Workflow activated successfully:", response.data);
+      } else {
+        console.error("Failed to activate workflow:", response);
+      }
+    } catch (error) {
+      console.error(
+        "Error activating workflow:",
+        error.response?.data || error.message
+      );
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -157,7 +174,11 @@ export default function Home() {
             <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           </div>
         ) : (
-          <WorkflowView workflows={sortedWorkFlow} viewMode={viewMode} />
+          <WorkflowView
+            workflows={sortedWorkFlow}
+            viewMode={viewMode}
+            onActivate={(id) => onActivate(id)} // ✅ Correct
+          />
         )}
 
         {/* Empty State */}

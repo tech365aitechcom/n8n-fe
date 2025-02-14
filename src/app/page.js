@@ -26,7 +26,7 @@ import axios from "axios";
 export default function Home() {
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState("grid");
   const [sort, setSort] = useState("Last Updated");
   const [sortedWorkFlow, setSortedWorkFlow] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,14 +101,22 @@ export default function Home() {
               </p>
             </div>
           </div>
-
-          <Button
-            onClick={() => router.push("/create-workflow")}
-            className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <Plus size={20} />
-            Create Workflow
-          </Button>
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <Button
+              onClick={() => router.push("/create-workflow")}
+              className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            >
+              <Plus size={20} />
+              Create Workflow
+            </Button>
+            <Button
+              onClick={() => router.push("/create-credentials")}
+              className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            >
+              <Plus size={20} />
+              Create Credentials
+            </Button>
+          </div>
         </div>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -198,6 +206,13 @@ export default function Home() {
               >
                 <Plus size={20} />
                 Create Workflow
+              </Button>
+              <Button
+                onClick={() => router.push("/create-credentials")}
+                className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Create Credentials
               </Button>
             </div>
           </div>

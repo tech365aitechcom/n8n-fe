@@ -178,7 +178,7 @@ const CredentialsDropdown = () => {
             </div>
           </div>
         </CardContent>
-        <CredentialForm schema={credentialSchema} />
+        <CredentialForm schema={credentialSchema} type={selectedCredential} />
       </Card>
     </div>
   );

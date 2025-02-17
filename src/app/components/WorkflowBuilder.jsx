@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  Save,
 } from "lucide-react";
 import {
   Dialog,
@@ -123,6 +124,8 @@ const WorkflowBuilder = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedNodeDetails, setSelectedNodeDetails] = useState(null);
   const [showNodeDetails, setShowNodeDetails] = useState(false);
+  const [credentials, setCredentials] = useState([]);
+  const [workflowName, setWorkflowName] = useState("Untitled Workflow");
 
   const fetchNodes = async (search, currentPage) => {
     setIsLoading(true);
@@ -138,6 +141,18 @@ const WorkflowBuilder = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await axios.get(`${baseURL}/get-existing-credentials`);
+        setCredentials(response.data);
+      } catch (error) {
+        console.error("Error fetching credentials:", error);
+      }
+    }
+    fetchData();
+  }, []);
 
   const fetchNodeDetails = async (nodeId) => {
     try {
@@ -199,11 +214,11 @@ const WorkflowBuilder = () => {
     [setNodes, setEdges]
   );
 
-  // const onNodeClick = useCallback((id) => {
-  //   if (id) {
-  //     fetchNodeDetails(id);
-  //   }
-  // }, []);
+  const onNodeClick = useCallback((id) => {
+    if (id) {
+      fetchNodeDetails(id);
+    }
+  }, []);
 
   const calculateNewNodePosition = (count) => {
     const baseX = 100;
@@ -246,163 +261,390 @@ const WorkflowBuilder = () => {
     return [];
   });
 
-  console.log(selectedNodeDetails, "raju");
+  const handleSaveWorkflow = async () => {
+    try {
+      const formattedNodes = nodes.map((node) => ({
+        type: node.data.nodeId,
+        data: node.data.config || {},
+      }));
+
+      const formattedEdges = edges.map((edge) => ({
+        source: edge.source,
+        target: edge.target,
+      }));
+
+      const workflowData = {
+        name: workflowName,
+        nodes: formattedNodes,
+        edges: formattedEdges,
+      };
+
+      const response = await axios.post(
+        `${baseURL}/api/create-workflows`,
+        workflowData
+      );
+
+      toast({
+        title: "Success",
+        description: "Workflow saved successfully!",
+        duration: 3000,
+      });
+
+      console.log("Workflow created:", response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save workflow. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      console.error("Error saving workflow:", error);
+    }
+  };
+
+  console.log(credentials, "raju");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
+    // <div className="h-screen w-full bg-gray-50">
+    //   <div className="p-4 border-b border-gray-100 bg-white">
+    //     <Dialog>
+    //       <DialogTrigger asChild>
+    //         <Button variant="outline" className="gap-2 hover:bg-gray-50">
+    //           <Plus className="h-4 w-4" />
+    //           Add Node
+    //         </Button>
+    //       </DialogTrigger>
+    //       <DialogContent className="bg-white">
+    //         <DialogHeader>
+    //           <DialogTitle>Add Workflow Node</DialogTitle>
+    //         </DialogHeader>
+    //         <div className="relative">
+    //           <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+    //           <Input
+    //             placeholder="Search nodes..."
+    //             value={searchTerm}
+    //             onChange={handleSearch}
+    //             className="pl-8 border-gray-200 focus-visible:ring-gray-200"
+    //           />
+    //         </div>
+    //         <div className="grid grid-cols-2 gap-4 min-h-[300px]">
+    //           {isLoading ? (
+    //             <div className="col-span-2 flex items-center justify-center text-gray-500">
+    //               Loading...
+    //             </div>
+    //           ) : nodeTypes.length === 0 ? (
+    //             <div className="col-span-2 flex items-center justify-center text-gray-500">
+    //               No nodes found
+    //             </div>
+    //           ) : (
+    //             Object.entries(nodeTypes).map(([type, config]) => (
+    //               <Card
+    //                 key={type}
+    //                 className="p-4 cursor-pointer border border-gray-100 hover:bg-gray-50 transition-colors group"
+    //                 onClick={() => {
+    //                   setSelectedNode(config._id);
+    //                   setIsModalOpen(true);
+    //                 }}
+    //               >
+    //                 <div className="flex items-center gap-2">
+    //                   <img
+    //                     src={`https://hireagent.app.n8n.cloud/${
+    //                       typeof config.iconUrl === "object"
+    //                         ? config.iconUrl.light
+    //                         : config.iconUrl
+    //                     }`}
+    //                     className="w-6 h-6 group-hover:opacity-80 transition-opacity"
+    //                   />
+    //                   <h3 className="font-medium text-gray-900">
+    //                     {config.displayName}
+    //                   </h3>
+    //                 </div>
+    //               </Card>
+    //             ))
+    //           )}
+    //         </div>
+    //         <div className="flex justify-between mt-4">
+    //           <Button
+    //             variant="outline"
+    //             onClick={goToPreviousPage}
+    //             disabled={page === 1}
+    //             className="flex items-center gap-2 disabled:opacity-50"
+    //           >
+    //             <ChevronLeft className="h-4 w-4" />
+    //             Previous
+    //           </Button>
+    //           <span className="flex items-center text-gray-600">
+    //             Page {page} of {totalPages}
+    //           </span>
+    //           <Button
+    //             variant="outline"
+    //             onClick={goToNextPage}
+    //             disabled={page === totalPages}
+    //             className="flex items-center gap-2 disabled:opacity-50"
+    //           >
+    //             Next
+    //             <ChevronRight className="h-4 w-4" />
+    //           </Button>
+    //         </div>
+    //         {selectedNode && (
+    //           <div className="mt-4">
+    //             <h4 className="font-bold mb-2">Select Action</h4>
+    //             <div className="space-y-2">
+    //               {actions
+    //                 .flatMap((action) =>
+    //                   action.options.map((opt) => opt.action)
+    //                 )
+    //                 .filter(Boolean)
+    //                 .map((actionName) => (
+    //                   <Button
+    //                     key={actionName}
+    //                     variant="outline"
+    //                     className="w-full justify-start"
+    //                     onClick={() => {
+    //                       createNode(selectedNode, actionName);
+    //                       setSelectedNode(null);
+    //                     }}
+    //                   >
+    //                     {actionName}
+    //                   </Button>
+    //                 ))}
+    //             </div>
+    //           </div>
+    //         )}
+    //       </DialogContent>
+    //     </Dialog>
+    //     <Dialog open={selectedNode} onOpenChange={setSelectedNode}>
+    //       <DialogContent className="bg-white">
+    //         <DialogHeader>
+    //           <DialogTitle>Node Details</DialogTitle>
+    //         </DialogHeader>
+    //         {selectedNode ? (
+    //           <div className="mt-4">
+    //             <h4 className="font-bold mb-2">Select Action</h4>
+    //             <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+    //               {actions
+    //                 .flatMap((action, actionIndex) =>
+    //                   action.options.map((opt, optIndex) => ({
+    //                     action: opt.action,
+    //                     key: `${actionIndex}-${optIndex}-${opt.action}`,
+    //                   }))
+    //                 )
+    //                 .filter((item) => Boolean(item.action))
+    //                 .map(({ action, key }) => (
+    //                   <Button
+    //                     key={key}
+    //                     variant="outline"
+    //                     className="w-full justify-start"
+    //                     onClick={() => {
+    //                       createNode(selectedNode, action);
+    //                       setSelectedNode(null);
+    //                     }}
+    //                   >
+    //                     {action}
+    //                   </Button>
+    //                 ))}
+    //             </div>
+    //           </div>
+    //         ) : (
+    //           <div className="text-center text-gray-500">
+    //             Loading node details...
+    //           </div>
+    //         )}
+    //       </DialogContent>
+    //     </Dialog>
+    //     <WorkflowModal
+    //       isOpen={isModalOpen}
+    //       onClose={() => setIsModalOpen(false)}
+    //       jsonData={selectedNodeDetails}
+    //     />
+    //   </div>
+    //   <div className="h-[calc(100vh-73px)]">
+    //     <ReactFlow
+    //       nodes={nodes}
+    //       edges={edges}
+    //       onNodesChange={onNodesChange}
+    //       onEdgesChange={onEdgesChange}
+    //       onConnect={onConnect}
+    //       nodeTypes={customNodeTypes}
+    //       defaultEdgeOptions={defaultEdgeOptions}
+    //       fitView
+    //       deleteKeyCode={["Backspace", "Delete"]}
+    //       minZoom={0.2}
+    //       maxZoom={1.5}
+    //       snapToGrid={false}
+    //       snapGrid={[15, 15]}
+    //     >
+    //       <Background color="#E2E8F0" gap={16} />
+    //       <Controls className="!bg-white !border-gray-100" />
+    //     </ReactFlow>
+    //   </div>
+    // </div>
     <div className="h-screen w-full bg-gray-50">
-      <div className="p-4 border-b border-gray-100 bg-white">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="gap-2 hover:bg-gray-50">
-              <Plus className="h-4 w-4" />
-              Add Node
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-white">
-            <DialogHeader>
-              <DialogTitle>Add Workflow Node</DialogTitle>
-            </DialogHeader>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search nodes..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="pl-8 border-gray-200 focus-visible:ring-gray-200"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4 min-h-[300px]">
-              {isLoading ? (
-                <div className="col-span-2 flex items-center justify-center text-gray-500">
-                  Loading...
+      <div className="p-4 border-b border-gray-100 bg-white flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Input
+            value={workflowName}
+            onChange={(e) => setWorkflowName(e.target.value)}
+            className="max-w-xs border-gray-200 focus-visible:ring-gray-200"
+            placeholder="Enter workflow name"
+          />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2 hover:bg-gray-50">
+                <Plus className="h-4 w-4" />
+                Add Node
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Add Workflow Node</DialogTitle>
+              </DialogHeader>
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search nodes..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="pl-8 border-gray-200 focus-visible:ring-gray-200"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4 min-h-[300px]">
+                {isLoading ? (
+                  <div className="col-span-2 flex items-center justify-center text-gray-500">
+                    Loading...
+                  </div>
+                ) : nodeTypes.length === 0 ? (
+                  <div className="col-span-2 flex items-center justify-center text-gray-500">
+                    No nodes found
+                  </div>
+                ) : (
+                  Object.entries(nodeTypes).map(([type, config]) => (
+                    <Card
+                      key={type}
+                      className="p-4 cursor-pointer border border-gray-100 hover:bg-gray-50 transition-colors group"
+                      onClick={() => {
+                        setSelectedNode(config._id);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={`https://hireagent.app.n8n.cloud/${
+                            typeof config.iconUrl === "object"
+                              ? config.iconUrl.light
+                              : config.iconUrl
+                          }`}
+                          className="w-6 h-6 group-hover:opacity-80 transition-opacity"
+                        />
+                        <h3 className="font-medium text-gray-900">
+                          {config.displayName}
+                        </h3>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+              <div className="flex justify-between mt-4">
+                <Button
+                  variant="outline"
+                  onClick={goToPreviousPage}
+                  disabled={page === 1}
+                  className="flex items-center gap-2 disabled:opacity-50"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <span className="flex items-center text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={goToNextPage}
+                  disabled={page === totalPages}
+                  className="flex items-center gap-2 disabled:opacity-50"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              {selectedNode && (
+                <div className="mt-4">
+                  <h4 className="font-bold mb-2">Select Action</h4>
+                  <div className="space-y-2">
+                    {actions
+                      .flatMap((action) =>
+                        action.options.map((opt) => opt.action)
+                      )
+                      .filter(Boolean)
+                      .map((actionName) => (
+                        <Button
+                          key={actionName}
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            createNode(selectedNode, actionName);
+                            setSelectedNode(null);
+                          }}
+                        >
+                          {actionName}
+                        </Button>
+                      ))}
+                  </div>
                 </div>
-              ) : nodeTypes.length === 0 ? (
-                <div className="col-span-2 flex items-center justify-center text-gray-500">
-                  No nodes found
+              )}
+            </DialogContent>
+          </Dialog>
+          <Dialog open={selectedNode} onOpenChange={setSelectedNode}>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Node Details</DialogTitle>
+              </DialogHeader>
+              {selectedNode ? (
+                <div className="mt-4">
+                  <h4 className="font-bold mb-2">Select Action</h4>
+                  <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+                    {actions
+                      .flatMap((action, actionIndex) =>
+                        action.options.map((opt, optIndex) => ({
+                          action: opt.action,
+                          key: `${actionIndex}-${optIndex}-${opt.action}`,
+                        }))
+                      )
+                      .filter((item) => Boolean(item.action))
+                      .map(({ action, key }) => (
+                        <Button
+                          key={key}
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            createNode(selectedNode, action);
+                            setSelectedNode(null);
+                          }}
+                        >
+                          {action}
+                        </Button>
+                      ))}
+                  </div>
                 </div>
               ) : (
-                Object.entries(nodeTypes).map(([type, config]) => (
-                  <Card
-                    key={type}
-                    className="p-4 cursor-pointer border border-gray-100 hover:bg-gray-50 transition-colors group"
-                    onClick={() => {
-                      setSelectedNode(config._id);
-                      setIsModalOpen(true);
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={`https://hireagent.app.n8n.cloud/${
-                          typeof config.iconUrl === "object"
-                            ? config.iconUrl.light
-                            : config.iconUrl
-                        }`}
-                        className="w-6 h-6 group-hover:opacity-80 transition-opacity"
-                      />
-                      <h3 className="font-medium text-gray-900">
-                        {config.displayName}
-                      </h3>
-                    </div>
-                  </Card>
-                ))
+                <div className="text-center text-gray-500">
+                  Loading node details...
+                </div>
               )}
-            </div>
-            <div className="flex justify-between mt-4">
-              <Button
-                variant="outline"
-                onClick={goToPreviousPage}
-                disabled={page === 1}
-                className="flex items-center gap-2 disabled:opacity-50"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <span className="flex items-center text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                onClick={goToNextPage}
-                disabled={page === totalPages}
-                className="flex items-center gap-2 disabled:opacity-50"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            {/* {selectedNode && (
-              <div className="mt-4">
-                <h4 className="font-bold mb-2">Select Action</h4>
-                <div className="space-y-2">
-                  {actions
-                    .flatMap((action) =>
-                      action.options.map((opt) => opt.action)
-                    )
-                    .filter(Boolean)
-                    .map((actionName) => (
-                      <Button
-                        key={actionName}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          createNode(selectedNode, actionName);
-                          setSelectedNode(null);
-                        }}
-                      >
-                        {actionName}
-                      </Button>
-                    ))}
-                </div>
-              </div>
-            )} */}
-          </DialogContent>
-        </Dialog>
-        {/* <Dialog open={selectedNode} onOpenChange={setSelectedNode}>
-          <DialogContent className="bg-white">
-            <DialogHeader>
-              <DialogTitle>Node Details</DialogTitle>
-            </DialogHeader>
-            {selectedNode ? (
-              <div className="mt-4">
-                <h4 className="font-bold mb-2">Select Action</h4>
-                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
-                  {actions
-                    .flatMap((action, actionIndex) =>
-                      action.options.map((opt, optIndex) => ({
-                        action: opt.action,
-                        key: `${actionIndex}-${optIndex}-${opt.action}`,
-                      }))
-                    )
-                    .filter((item) => Boolean(item.action))
-                    .map(({ action, key }) => (
-                      <Button
-                        key={key}
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          createNode(selectedNode, action);
-                          setSelectedNode(null);
-                        }}
-                      >
-                        {action}
-                      </Button>
-                    ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500">
-                Loading node details...
-              </div>
-            )}
-          </DialogContent>
-        </Dialog> */}
-        <WorkflowModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          jsonData={selectedNodeDetails}
-        />
+            </DialogContent>
+          </Dialog>
+          <WorkflowModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            jsonData={selectedNodeDetails}
+          />
+        </div>
+        <Button onClick={handleSaveWorkflow} className="gap-2">
+          <Save className="h-4 w-4" />
+          Save Workflow
+        </Button>
       </div>
       <div className="h-[calc(100vh-73px)]">
         <ReactFlow
@@ -411,7 +653,6 @@ const WorkflowBuilder = () => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          // onNodeClick={onNodeClick}
           nodeTypes={customNodeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
           fitView
@@ -425,6 +666,11 @@ const WorkflowBuilder = () => {
           <Controls className="!bg-white !border-gray-100" />
         </ReactFlow>
       </div>
+      <WorkflowModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        jsonData={selectedNodeDetails}
+      />
     </div>
   );
 };
